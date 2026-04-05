@@ -586,3 +586,353 @@ if __name__ == "__main__":
     print("=== Data-03 ===");    data03_demo()
     print("=== Cyber-03 ===");   cyber03_demo()
     print("=== Agent-01 ===");   agent01_demo()
+
+
+# ===========================================================================
+# DATA-04: Apache Parquet Writer (Columnar Storage)
+# ===========================================================================
+import struct, io, json
+
+class MiniParquetWriter:
+    def __init__(self):
+        self.columns = {}
+        self.MAGIC = b"PARQ"
+
+    def add_column(self, name, data):
+        """Simple RLE: (count, value) encoding for columns."""
+        if not data: return
+        encoded = []
+        if len(data) > 0:
+            current_val = data[0]
+            count = 0
+            for val in data:
+                if val == current_val:
+                    count += 1
+                else:
+                    encoded.append((count, current_val))
+                    current_val = val
+                    count = 1
+            encoded.append((count, current_val))
+        
+        # Pack into binary: [count(I), val_len(I), val_bytes]
+        buf = io.BytesIO()
+        for count, val in encoded:
+            val_bytes = str(val).encode('utf-8')
+            buf.write(struct.pack('<II', count, len(val_bytes)))
+            buf.write(val_bytes)
+        self.columns[name] = buf.getvalue()
+
+    def write(self, file_path):
+        footer = {"columns": {}, "version": 1}
+        offset = len(self.MAGIC)
+        
+        with open(file_path, "wb") as f:
+            f.write(self.MAGIC)
+            for name, data in self.columns.items():
+                data_len = len(data)
+                footer["columns"][name] = {"offset": offset, "length": data_len}
+                f.write(data)
+                offset += data_len
+            
+            # Write footer
+            footer_bytes = json.dumps(footer).encode('utf-8')
+            f.write(footer_bytes)
+            f.write(struct.pack('<I', len(footer_bytes))) # Length of footer
+            f.write(b"FOOT") # End magic
+
+def data04_demo():
+    writer = MiniParquetWriter()
+    writer.add_column("status", ["success"] * 10 + ["fail"] * 2 + ["success"] * 5)
+    writer.add_column("code", [200] * 10 + [500] * 2 + [200] * 5)
+    writer.write("data04_output.mparq")
+    print("Data-04: Parquet-like file written to data04_output.mparq")
+
+
+# ===========================================================================
+# DATA-05: Change Data Capture (CDC) Engine (SQLite WAL)
+# ===========================================================================
+class CDCEngine:
+    def __init__(self, db_path):
+        self.conn = sqlite3.connect(db_path)
+        self.conn.row_factory = sqlite3.Row
+        self._setup_audit_table()
+
+    def _setup_audit_table(self):
+        self.conn.executescript("""
+            CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                table_name TEXT, op TEXT, old_data TEXT, new_data TEXT, ts DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            DROP TRIGGER IF EXISTS tr_users_ins;
+            CREATE TRIGGER tr_users_ins AFTER INSERT ON users BEGIN
+                INSERT INTO audit_log(table_name, op, new_data) 
+                VALUES ('users', 'INSERT', json_object('id', new.id, 'name', new.name, 'email', new.email));
+            END;
+            DROP TRIGGER IF EXISTS tr_users_upd;
+            CREATE TRIGGER tr_users_upd AFTER UPDATE ON users BEGIN
+                INSERT INTO audit_log(table_name, op, old_data, new_data) 
+                VALUES ('users', 'UPDATE', 
+                    json_object('id', old.id, 'name', old.name, 'email', old.email),
+                    json_object('id', new.id, 'name', new.name, 'email', new.email));
+            END;
+        """)
+        self.conn.commit()
+
+    def poll_events(self, since_id=0):
+        cursor = self.conn.execute("SELECT * FROM audit_log WHERE id > ? ORDER BY id ASC", (since_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+def data05_demo():
+    cdc = CDCEngine(":memory:") # Use memory for demo
+    cdc.conn.execute("INSERT INTO users (name, email) VALUES ('An', 'an@vn.com')")
+    cdc.conn.execute("UPDATE users SET name = 'Anh' WHERE id = 1")
+    events = cdc.poll_events()
+    print(f"Data-05: Captured {len(events)} CDC events.")
+    for e in events: print(f"  [{e['op']}] {e['new_data']}")
+
+
+# ===========================================================================
+# DATA-06: Schema Registry & Evolution Validator
+# ===========================================================================
+class SchemaRegistry:
+    def __init__(self):
+        self.subjects = {} # {name: [schemas]}
+        self.modes = {}    # {name: mode}
+
+    def register_schema(self, subject, schema, mode="BACKWARD"):
+        if subject not in self.subjects:
+            self.subjects[subject] = [schema]
+            self.modes[subject] = mode
+            return 1
+        
+        # Check compatibility
+        prev_schema = self.subjects[subject][-1]
+        if self._is_compatible(prev_schema, schema, mode):
+            self.subjects[subject].append(schema)
+            return len(self.subjects[subject])
+        raise ValueError(f"Schema incompatible with {mode} mode")
+
+    def _is_compatible(self, old, new, mode):
+        if mode == "BACKWARD":
+            # New schema must be able to read old data (all old fields must exist in new)
+            for k, v in old.items():
+                if k not in new or new[k] != v: return False
+            return True
+        return True # Simplified for other modes
+
+def data06_demo():
+    reg = SchemaRegistry()
+    reg.register_schema("users", {"id": "int", "name": "str"})
+    try:
+        reg.register_schema("users", {"id": "int"}) # Should fail BACKWARD (deleted 'name')
+    except ValueError as e:
+        print(f"Data-06: Caught expected error: {e}")
+
+
+# ===========================================================================
+# DATA-07: Distributed Aggregation (MapReduce)
+# ===========================================================================
+def word_mapper(chunk):
+    counts = defaultdict(int)
+    for word in chunk.split():
+        counts[word.lower()] += 1
+    return list(counts.items())
+
+def data07_demo():
+    data = ["Python is great", "Data is power", "Python for Data", "Scale with Python"]
+    # Sequential simulation of MapReduce steps
+    mapped = [word_mapper(d) for d in data] 
+    shuffled = defaultdict(list)
+    for sublist in mapped:
+        for k, v in sublist: shuffled[k].append(v)
+    
+    reduced = {k: sum(v) for k, v in shuffled.items()}
+    print(f"Data-07: MapReduce result for 'python': {reduced.get('python')}")
+
+
+# ===========================================================================
+# DATA-08: Time-Series Compression (Delta Encoding)
+# ===========================================================================
+def gorilla_compress_simple(points):
+    """Simplified Delta-TS and XOR-Val compression."""
+    if not points: return b""
+    buf = io.BytesIO()
+    last_ts, last_val = points[0]
+    # Header: First point raw
+    buf.write(struct.pack('<Qd', last_ts, last_val))
+    
+    for ts, val in points[1:]:
+        delta_ts = ts - last_ts
+        # XOR float bits by reinterpreting as int
+        v1 = struct.unpack('<Q', struct.pack('<d', last_val))[0]
+        v2 = struct.unpack('<Q', struct.pack('<d', val))[0]
+        xor_val = v1 ^ v2
+        
+        buf.write(struct.pack('<I Q', delta_ts, xor_val)) # Simplified storage
+        last_ts, last_val = ts, val
+    return buf.getvalue()
+
+def data08_demo():
+    data = [(1000, 25.5), (1060, 25.5), (1120, 25.6)]
+    compressed = gorilla_compress_simple(data)
+    print(f"Data-08: Raw size: {len(data)*16} bytes, Compressed: {len(compressed)} bytes")
+
+
+# ===========================================================================
+# DATA-09: Data Lineage Graph Builder
+# ===========================================================================
+class LineageTracker:
+    def __init__(self):
+        self.graph = defaultdict(list)
+
+    def add_edge(self, src, dst):
+        if dst in self._get_all_upstream(src):
+            raise CycleError(f"Cycle detected: {dst} -> ... -> {src}")
+        self.graph[src].append(dst)
+
+    def _get_all_upstream(self, node, visited=None):
+        if visited is None: visited = set()
+        for parent, children in self.graph.items():
+            if node in children and parent not in visited:
+                visited.add(parent)
+                self._get_all_upstream(parent, visited)
+        return visited
+
+    def impact_analysis(self, node):
+        """BFS to find all downstream affected nodes."""
+        affected = set()
+        q = [node]
+        while q:
+            curr = q.pop(0)
+            for child in self.graph[curr]:
+                if child not in affected:
+                    affected.add(child)
+                    q.append(child)
+        return affected
+
+class CycleError(Exception): pass
+
+def data09_demo():
+    lt = LineageTracker()
+    lt.add_edge("raw_users", "clean_users")
+    lt.add_edge("clean_users", "user_report")
+    print(f"Data-09: Impact of 'raw_users': {lt.impact_analysis('raw_users')}")
+
+
+# ===========================================================================
+# CYBER-04: TLS Certificate Inspector
+# ===========================================================================
+# Note: Requires 'cryptography' package
+def cyber04_inspect(hostname):
+    try:
+        from cryptography import x509
+        import ssl
+        context = ssl.create_default_context()
+        with socket.create_connection((hostname, 443), timeout=3) as sock:
+            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                cert_bin = ssock.getpeercert(binary_form=True)
+                cert = x509.load_der_x509_certificate(cert_bin)
+                expiry = cert.not_valid_after_utc
+                days_left = (expiry - datetime.now(datetime.timezone.utc)).days
+                print(f"Cyber-04: {hostname} expires in {days_left} days. Issuer: {cert.issuer.rfc4514_string()[:30]}...")
+    except ImportError:
+        print("Cyber-04: cryptography not installed. Skipping.")
+    except Exception as e:
+        print(f"Cyber-04: Scan failed for {hostname}: {e}")
+
+
+# ===========================================================================
+# CYBER-05: PCAP Parser (Simplified)
+# ===========================================================================
+def cyber05_parse_pcap_header(data):
+    # Global Header 24 bytes
+    magic = data[:4]
+    if magic == b'\xd4\xc3\xb2\xa1': # Little Endian
+        _, v_maj, v_min, _, _, _, network = struct.unpack('<IHHIIII', data[:24])
+        return "Little-Endian", network
+    return "Unknown", None
+
+def data05_demo_pcap():
+    mock_header = struct.pack('<IHHIIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+    fmt, net = cyber05_parse_pcap_header(mock_header)
+    print(f"Cyber-05: PCAP Format: {fmt}, Network Type: {net}")
+
+
+# ===========================================================================
+# CYBER-06: JWT Security Auditor
+# ===========================================================================
+class JWTAuditor:
+    def __init__(self, token):
+        self.token = token
+        self.parts = token.split('.')
+
+    def audit(self):
+        issues = []
+        if len(self.parts) != 3: return ["Invalid JWT format"]
+        
+        # 1. alg: none check
+        try:
+            header = json.loads(base64.urlsafe_b64decode(self.parts[0] + "=="))
+            if header.get("alg", "").lower() == "none":
+                issues.append("CRITICAL: 'alg: none' accepted")
+        except: pass
+
+        # 2. Expiry check
+        try:
+            payload = json.loads(base64.urlsafe_b64decode(self.parts[1] + "=="))
+            if "exp" not in payload:
+                issues.append("WARNING: Missing 'exp' claim")
+        except: pass
+
+        return issues
+
+def cyber06_demo():
+    bad_token = base64.urlsafe_b64encode(b'{"alg":"none"}').decode().strip('=') + "." + \
+                base64.urlsafe_b64encode(b'{"user":"admin"}').decode().strip('=') + "."
+    auditor = JWTAuditor(bad_token)
+    print(f"Cyber-06 Issues: {auditor.audit()}")
+
+
+# ===========================================================================
+# CYBER-07: Compliance Scanner (AST)
+# ===========================================================================
+import ast
+
+class PII_Scanner(ast.NodeVisitor):
+    def __init__(self):
+        self.violations = []
+        self.pii_keywords = {'email', 'phone', 'sdt', 'cmnd', 'password'}
+
+    def visit_Call(self, node):
+        # Catch print(pii_variable)
+        if isinstance(node.func, ast.Name) and node.func.id == 'print':
+            for arg in node.args:
+                if isinstance(arg, ast.Name) and arg.id.lower() in self.pii_keywords:
+                    self.violations.append(f"PII Leak: printing variable '{arg.id}' at line {node.lineno}")
+        self.generic_visit(node)
+
+def cyber07_demo():
+    code = "email = 'test@vn.com'\nprint(email)\nlogger.info(password)"
+    tree = ast.parse(code)
+    scanner = PII_Scanner()
+    scanner.visit(tree)
+    print(f"Cyber-07 Findings: {scanner.violations}")
+
+
+if __name__ == "__main__":
+    print("=== Backend-02 ==="); backend02_demo()
+    print("=== Data-01 ===");    data01_demo()
+    print("=== Data-02 ===");    data02_demo()
+    print("=== Data-03 ===");    data03_demo()
+    print("=== Data-04 ===");    data04_demo()
+    print("=== Data-05 ===");    data05_demo()
+    print("=== Data-06 ===");    data06_demo()
+    print("=== Data-07 ===");    data07_demo()
+    print("=== Data-08 ===");    data08_demo()
+    print("=== Data-09 ===");    data09_demo()
+    print("=== Cyber-03 ===");   cyber03_demo()
+    print("=== Cyber-05 ===");   data05_demo_pcap()
+    print("=== Cyber-06 ===");   cyber06_demo()
+    print("=== Cyber-07 ===");   cyber07_demo()
+    print("=== Agent-01 ===");   agent01_demo()
