@@ -2,101 +2,207 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Exercises](https://img.shields.io/badge/exercises-72-green.svg)](#)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A comprehensive, production-oriented Python curriculum designed to bridge the gap between textbook knowledge and real-world software engineering.
-
-## 🎯 Professional Value & Evaluation
-
-This curriculum is meticulously designed **not just to teach syntax, but to forge industry-ready engineers.**
-
-After completing this curriculum, a developer will possess the following professional capabilities:
-
-- **Core Engineering:** Write robust, async, and concurrent Python code with optimal memory management and defensive programming techniques.
-- **Backend Architecture:** Build scalable REST APIs (FastAPI/Flask-like), manage database connections, implement custom ORMs, and design microservice architectures.
-- **Data Engineering:** Construct memory-efficient ETL pipelines, develop data quality frameworks, and perform time-series anomaly detection.
-- **Security & Forensics:** Implement JWT authentication, build password hashing systems, create port scanners, and analyze forensic logs.
-- **Advanced Technology:** Leverage AI Agents (ReAct, Tool-use), Computer Vision (OpenCV document scanning, steganography).
-- **Quality & DevOps (_New!_):** Ensure code reliability with advanced `pytest` mocking, and deploy applications using Docker and GitHub Actions CI/CD pipelines.
-
-By engaging with these exercises, learners bypass the typical "tutorial hell" and directly confront the engineering challenges faced in modern tech companies.
+Một lộ trình học Python thực chiến, được thiết kế để thu hẹp khoảng cách giữa kiến thức học thuật và kỹ thuật phần mềm thực tế tại các công ty công nghệ ở Việt Nam.
 
 ---
 
-## 📚 Curriculum Structure
+## 🚀 Quick Start (5 phút setup)
 
-The curriculum is divided into three main sections, heavily inspired by foundational texts and industry standards:
+### Bước 1 — Clone repo và cài dependencies
+```bash
+git clone https://github.com/dyltran3/Pyt-Work-Guide.git
+cd Pyt-Work-Guide
+
+# Cài thư viện cho tracker (bắt buộc)
+pip install rich
+```
+
+### Bước 2 — Khởi tạo Tracker
+```bash
+python python_curriculum/tracker.py --init
+```
+
+### Bước 3 — Bắt đầu lộ trình
+```bash
+# Xem dashboard tổng quan
+python python_curriculum/tracker.py
+
+# Xem lộ trình Career Track (Backend)
+python python_curriculum/tracker.py roadmap backend
+
+# Đánh dấu bắt đầu làm bài A-01
+python python_curriculum/tracker.py start A-01
+```
+
+---
+
+## 🎯 Lộ trình Career Roadmaps
+
+Chọn lộ trình phù hợp với mục tiêu nghề nghiệp của bạn. Tracker sẽ tự động gợi ý bài học tiếp theo.
+
+| Roadmap | Trọng tâm | Thời gian |
+| :--- | :--- | :--- |
+| **🖥️ Backend Engineer** | REST APIs, Async, DB Pools, Task Queues | ~8 tuần |
+| **📊 Data Engineer** | ETL Pipelines, Streaming, Schema, Parquet | ~9 tuần |
+| **🔐 Security Engineer** | Network, Crypto, Forensics, Compliance | ~8 tuần |
+| **🤖 AI/ML Engineer** | LLM Agents, RAG, Tool Orchestration | ~7 tuần |
+| **🛠️ DevOps Engineer** | Docker, CI/CD, Observability, Automation | ~6 tuần |
+
+---
+
+## 📦 Dependency Management
+
+Cài đặt thư viện theo từng Career Track bạn theo đuổi:
+
+<details>
+<summary><b>Click để xem danh sách lệnh cài đặt</b></summary>
+
+### Backend
+```bash
+pip install fastapi uvicorn pydantic pydantic-settings httpx
+```
+
+### Data & Analytics
+```bash
+pip install pandas numpy
+```
+
+### Cybersecurity
+```bash
+pip install pycryptodome cryptography pyyaml
+```
+
+### AI Agent / Computer Vision
+```bash
+pip install requests Pillow opencv-python sentence-transformers
+```
+
+### Infrastructure & QA
+```bash
+pip install pytest pytest-cov prometheus_client aiohttp
+```
+</details>
+
+---
+
+## 📚 Curriculum Detail (72 Bài tập)
 
 ### 📖 Book 1: Learn Python The Hard Way (Applied)
+Lớp nền tảng vững chắc về CLI, logic xử lý và tư duy lập trình hệ thống.
 
-Focuses on structured programming, file parsing, algorithms, and core system design.
-_Highlights: Log Parsers, Rate Limiters, Dependency Resolvers, Plugin Architectures._
+| ID | Bài tập | Skill chính | Độ khó |
+| :--- | :--- | :--- | :--- |
+| A-01 | CLI Environment Inspector | `os.environ`, `f-strings` | ★★☆☆☆ |
+| A-02 | Structured Log Parser | `Regex`, `Generators` | ★★★☆☆ |
+| A-03 | Config File Generator | `String formatting` | ★★☆☆☆ |
+| A-04 | Binary File Inspector | `bytes`, `struct`, `hex` | ★★★☆☆ |
+| A-05 | API Request Validator | `Recursion`, `Dicts` | ★★★☆☆ |
+| A-06 | HTTP Status Decision Tree | `Guard clauses` | ★★☆☆☆ |
+| A-07 | Retry Logic with Backoff | `Decorators`, `Backoff` | ★★★★☆ |
+| A-08 | Chunked File Processor | `itertools.islice` | ★★★☆☆ |
+| A-09 | Rate Limiter Queue | `time`, `collections.deque` | ★★★☆☆ |
+| A-10 | Dependency Resolver | `DFS`, `Topological sort` | ★★★★☆ |
+| A-11 | Plugin Architecture | `OOP`, `Composition` | ★★★☆☆ |
+| A-12 | ORM-lite Table Mapper | `Dict comprehension` | ★★★☆☆ |
+| A-13 | Service Health Monitor | `Inheritance`, `Polymorphism` | ★★★☆☆ |
+| A-14 | Project Scaffolding | `pathlib.Path` | ★★☆☆☆ |
+| A-15 | Contract Testing | `inspect.getmembers` | ★★★★☆ |
 
 ### 📖 Book 2: Python Notes For Professionals
+Đi sâu vào các khái niệm nâng cao, tối ưu hóa và concurrency.
 
-Dives deep into advanced Python mechanics, networking, and framework internals.
-_Highlights: Priority Schedulers, Async HTTP Crawlers, JWT from scratch, Reactive Event Systems._
+| ID | Bài tập | Skill chính | Độ khó |
+| :--- | :--- | :--- | :--- |
+| B-01 | Network Packet Inspector | `Bitwise &`, `Masking` | ★★★☆☆ |
+| B-02 | Memory-Efficient Stream | `Generators (yield)` | ★★★☆☆ |
+| B-03 | Scope Isolation | `Globals`, `Locals` | ★★★☆☆ |
+| B-04 | LRU Cache từ đầu | `OrderedDict`, `Linked List` | ★★★★☆ |
+| B-05 | Priority Task Scheduler | `heapq`, `Priority Queue` | ★★★★☆ |
+| B-06 | Inverted Index Builder | `Indexing`, `Full-text` | ★★★★☆ |
+| B-07 | Async HTTP Crawler | `asyncio`, `aiohttp` | ★★★★☆ |
+| B-08 | Image Processor (CPU) | `Multiprocessing` | ★★★★☆ |
+| B-09 | Thread-Safe Pub/Sub | `Threading`, `Queue` | ★★★★☆ |
+| B-10 | Raw HTTP Client | `Raw Sockets`, `HTTP Protocol` | ★★★★★ |
+| B-11 | API Wrapper Generator | `Meta-programming` | ★★★★☆ |
+| B-12 | Mini Flask Clone | `Routing`, `WSGI` | ★★★★☆ |
+| B-13 | SQL Migration Runner | `sqlite3`, `Migrations` | ★★★★☆ |
+| B-14 | ETL Data Pipeline | `Generators`, `ETL` | ★★★★☆ |
+| B-15 | Password Hashing | `hashlib`, `Salt` | ★★★☆☆ |
+| B-16 | JWT từ Scratch | `hmac`, `base64` | ★★★★☆ |
+| B-17 | DI Container | `Dependency Injection` | ★★★★☆ |
+| B-18 | Reactive Event System | `Observer Pattern` | ★★★★☆ |
+| B-19 | Profiling & Optimization | `cProfile`, `Optimization` | ★★★★☆ |
+| B-20 | Env Manager CLI | `Virtualenv`, `Subprocess` | ★★★★☆ |
+| B-21 | Concurrency Shootout | `Benchmarking` | ★★★★☆ |
+| B-22 | Modern Python 3.11+ | `Match-case`, `Task Groups` | ★★★☆☆ |
 
-### 🚀 Career Tracks (Specializations)
+### 🚀 Career Tracks (Specialized)
+Các bài tập mô phỏng công việc thực tế tại các doanh nghiệp lớn.
 
-Targeted exercises for specific industry roles:
+#### 🖥️ Backend & DevOps
+| ID | Title | Main Skill | Difficulty |
+| :--- | :--- | :--- | :--- |
+| Backend-01 | FastAPI Boilerplate | `Pydantic-settings`, `Middleware` | ★★★★☆ |
+| Backend-02 | DB Connection Pool | `Queue`, `Monitoring` | ★★★★☆ |
+| Backend-03 | Async Task Queue | `asyncio.Queue` | ★★★★☆ |
+| Backend-04 | DB Optimization | `Clustered Index`, `Queries` | ★★★★★ |
+| DevOps-01 | Microservices | `Docker Compose` | ★★★★☆ |
+| DevOps-02 | CI/CD Pipeline | `GitHub Actions` | ★★★★☆ |
+| DevOps-03 | Observability | `Prometheus`, `Logging` | ★★★★☆ |
 
-1. **Backend Engineering**: _Production FastAPI Boilerplates, Async Task Queues._
-2. **Data Analysis**: _Data Quality Frameworks, SQL Analyzers._
-3. **Cybersecurity**: _Forensic Log Analyzers, Secure File Transfers._
-4. **Computer Vision**: _Document Scanners, Steganography._
-5. **AI Agent**: _Tool-Use Foundations, Multi-Step Reasoning Agents._
-6. **Testing & QA**: _Advanced Pytest & Mocks._
-7. **DevOps Engineering**: _Dockerized Microservices, CI/CD Pipelines._
+#### 📊 Data Analysis & Engineering
+| ID | Title | Main Skill | Difficulty |
+| :--- | :--- | :--- | :--- |
+| Data-01 | DQ Framework | `Validation logic` | ★★★★☆ |
+| Data-02 | Anomaly Detector | `Z-Score`, `Rolling Mean` | ★★★★☆ |
+| Data-03 | SQL Performance | `EXPLAIN QUERY PLAN` | ★★★★☆ |
+| Data-04 | Parquet Writer | `Binary struct`, `RLE` | ★★★★★ |
+| Data-05 | CDC Engine | `SQLite WAL`, `Triggers` | ★★★★★ |
+| Data-06 | Schema Registry | `Compatibility logic` | ★★★★★ |
+| Data-07 | MapReduce Framework | `Multiprocessing`, `Shuffling` | ★★★★★ |
+| Data-08 | TS Compression | `Gorilla`, `Delta encoding` | ★★★★★ |
+| Data-09 | Data Lineage | `Adjacency List`, `BFS/DFS` | ★★★★★ |
+
+#### 🔐 Cybersecurity
+| ID | Title | Main Skill | Difficulty |
+| :--- | :--- | :--- | :--- |
+| Cyber-01 | Port Scanner | `socket`, `ThreadPool` | ★★★★☆ |
+| Cyber-02 | Secure Transfer | `AES`, `Cryptography` | ★★★★☆ |
+| Cyber-03 | Log Forensics | `RegEx`, `Anomly Detection` | ★★★★☆ |
+| Cyber-04 | TLS Inspector | `ssl`, `X.509 Parsing` | ★★★★★ |
+| Cyber-05 | PCAP Parser | `Binary parsing`, `struct` | ★★★★★ |
+| Cyber-06 | JWT Auditor | `Attacker Simulation` | ★★★★★ |
+| Cyber-07 | Compliance Scan | `AST Analysis`, `Decree 13` | ★★★★★ |
+
+#### 🤖 AI, Vision & QA
+| ID | Title | Main Skill | Difficulty |
+| :--- | :--- | :--- | :--- |
+| Agent-01 | Tool-Use Foundation | `Function Calling` | ★★★★★ |
+| Agent-02 | Reasoning Agent | `ReAct Pattern` | ★★★★★ |
+| Agent-03 | 🏆 MAIN Project | `Final Integration` | ★★★★★ |
+| Vision-01 | Steganography | `LSB Manipulation` | ★★★★☆ |
+| Vision-02 | Doc Scanner | `Perspective Transform` | ★★★★☆ |
+| Vision-03 | CAPTCHA Gen | `Image Noise`, `PIL` | ★★★★☆ |
+| Test-01 | Advanced Mocks | `unittest.mock` | ★★★★☆ |
+| Test-02 | Property Testing | `Hypothesis` | ★★★★☆ |
+| Test-03 | Integration Tests | `Fixtures`, `FastAPI test` | ★★★★☆ |
+| Test-04 | Mutation Testing | `Fault Injection` | ★★★★☆ |
 
 ---
 
-## 🛠️ How to Use This Guide
-
-This repository comes with a built-in CLI tracker to monitor your progress.
-
-**1. Setup Environment**
-Ensure you have Python 3.11+ installed.
-
-**2. List All Exercises**
-
-```bash
-python python_curriculum/tracker.py list
-```
-
-**3. Check Exercise Details**
-
-```bash
-python python_curriculum/tracker.py get A-01
-```
-
-**4. Mark an Exercise as Complete**
-
-```bash
-python python_curriculum/tracker.py done A-01
-```
-
-**5. View Your Progress Report**
-
-```bash
-python python_curriculum/tracker.py report
-```
-
-### 📝 Exercise Format
-
-Every markdown file in this curriculum follows a rigorous template:
-
-- `🎯 Mục tiêu thực tế`: The real-world objective.
-- `💡 Hint chiến lược`: Progressive hints (from direction to near-solution) to unblock you without spoiling the answer.
-- `🔗 Kết nối thực tế`: How this connects to standard libraries and industry tools.
-- `📈 Extension challenge`: Advanced challenges for those who want to push further.
+## 🛠️ Work In Progress (Đang cập nhật)
+Dự án vẫn đang tích cực bổ sung nội dung mới cho Career Tracks:
+- [ ] **Data Engineering**: Data-10 (Real-time Stream Processor with Flink-like logic)
+- [ ] **Cybersecurity**: Cyber-08 (Mini Malware Sandbox with Restricted Execution)
+- [ ] **SRE**: Platform-01 (Auto-scaling Simulation)
 
 ---
 
 ## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check [issues page](#).
+Issues và Pull Requests luôn được chào đón. Hãy giúp chúng tôi hoàn thiện lộ trình này bằng cách đóng góp các bài tập mới hoặc sửa lỗi.
 
 ## 📄 License
-
-This project is licensed under the MIT License.
+MIT License — Copyright (c) 2026 Trần Tuấn Anh
